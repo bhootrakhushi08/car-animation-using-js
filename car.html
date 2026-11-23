@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moving Car Animation with Gears</title>
+    <style>
+        /* General Page Styling */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a24;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #f59e0b;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #a1a1aa;
+        }
+
+        /* Scene Container Frame */
+        .scene {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 420px;
+            overflow: hidden;
+            border: 3px solid #334155;
+            border-radius: 12px;
+            background: linear-gradient(to bottom, #2b1055 0%, #75517d 50%, #f8c37d 100%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        /* 1. SCROLLING CITY SKYLINE BACKGROUND */
+        .city-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 290px;
+            display: flex;
+            animation: moveCity 18s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .city-segment {
+            width: 50%;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        /* 2. SCROLLING ROAD */
+        .road {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 130px;
+            background-color: #334155;
+            border-top: 5px solid #64748b;
+            animation: moveRoad 3s linear infinite;
+            animation-play-state: paused;
+        }
+
+        /* Sidewalk Stripe */
+        .sidewalk {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: repeating-linear-gradient(90deg, #94a3b8 0, #94a3b8 30px, #475569 30px, #475569 35px);
+        }
+
+        /* Center Dashed Lane Markings */
+        .lane-lines {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            transform: translateY(-50%);
+            background: repeating-linear-gradient(90deg, #ffffff 0px, #ffffff 60px, transparent 60px, transparent 120px);
+        }
+
+        /* 3. CAR CONTAINERS */
+        .car-box {
+            position: absolute;
+        }
+
+        /* Yellow Car (Upper lane) */
+        .yellow-car {
+            bottom: 50px;
+            left: 420px;
+            z-index: 2;
+            width: 240px;
+            transform: scale(0.9);
+        }
+
+        /* Red Car (Lower lane) */
+        .red-car {
+            bottom: 12px;
+            left: 200px;
+            z-index: 3;
+            width: 270px;
+        }
+
+        /* ROTATING WHEELS */
+        .wheel {
+            position: absolute;
+            animation: rotateWheel 0.8s linear infinite;
+            animation-play-state: paused;
+        }
+
+        /* Yellow Car Wheel Positions */
+        .yellow-car .wheel-back {
+            bottom: 4px;
+            left: 32px;
+            width: 42px;
+            height: 42px;
+        }
+        .yellow-car .wheel-front {
+            bottom: 4px;
+            left: 166px;
+            width: 42px;
+            height: 42px;
+        }
+
+        /* Red Car Wheel Positions */
+        .red-car .wheel-back {
+            bottom: 4px;
+            left: 36px;
+            width: 47px;
+            height: 47px;
+        }
+        .red-car .wheel-front {
+            bottom: 4px;
+            left: 187px;
+            width: 47px;
+            height: 47px;
+        }
+
+        /* ANIMATION PLAYBACK & REVERSE CONTROL CLASSES */
+        .running {
+            animation-play-state: running !important;
+        }
+
+        .reverse {
+            animation-direction: reverse !important;
+        }
+
+        /* KEYFRAME ANIMATIONS */
+        @keyframes rotateWheel {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes moveRoad {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        @keyframes moveCity {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* CONTROL BUTTONS PANEL */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #0f172a;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            max-width: 900px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .gear-btn {
+            background-color: #334155;
+            color: #ffffff;
+            border: 2px solid #475569;
+        }
+
+        .gear-btn.selected-gear {
+            background-color: #f59e0b;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        #startGear {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        #stop {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+
+        .status-box {
+            margin-left: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Moving Car Animation with Gears</h1>
+    <p>Select a gear, then click Start Gear or Stop</p>
+
+    <!-- VIEWPORT SCENE -->
+    <div class="scene">
+        <!-- 1. City Background Layer (Inline SVG) -->
+        <div class="city-bg" id="cityBg">
+            <div class="city-segment">
+                <svg width="100%" height="100%" viewBox="0 0 1000 290" preserveAspectRatio="none">
+                    <!-- Buildings Silhouette & Windows -->
+                    <rect x="20" y="40" width="80" height="250" fill="#1e293b"/>
+                    <g fill="#fef08a" opacity="0.7">
+                        <rect x="35" y="60" width="15" height="15"/><rect x="65" y="60" width="15" height="15"/>
+                        <rect x="35" y="90" width="15" height="15"/><rect x="65" y="90" width="15" height="15"/>
+                        <rect x="35" y="120" width="15" height="15"/><rect x="65" y="120" width="15" height="15"/>
+                    </g>
+                    
+                    <polygon points="120,290 120,80 150,30 180,80 180,290" fill="#d97706"/>
+                    <g fill="#fffbeb" opacity="0.8">
+                        <rect x="140" y="90" width="20" height="12"/><rect x="140" y="120" width="20" height="12"/>
+                        <rect x="140" y="150" width="20" height="12"/>
+                    </g>
+
+                    <rect x="200" y="100" width="110" height="190" fill="#c2410c"/>
+                    <g fill="#ffedd5" opacity="0.7">
+                        <rect x="215" y="120" width="20" height="20"/><rect x="245" y="120" width="20" height="20"/><rect x="275" y="120" width="20" height="20"/>
+                        <rect x="215" y="155" width="20" height="20"/><rect x="275" y="155" width="20" height="20"/>
+                    </g>
+
+                    <rect x="330" y="50" width="90" height="240" fill="#0f766e"/>
+                    <g fill="#ccfbf1" opacity="0.8">
+                        <rect x="345" y="70" width="60" height="8"/><rect x="345" y="90" width="60" height="8"/>
+                        <rect x="345" y="110" width="60" height="8"/><rect x="345" y="130" width="60" height="8"/>
+                    </g>
+
+                    <rect x="440" y="20" width="140" height="270" fill="#1e3a8a"/>
+                    <g fill="#dbeafe" opacity="0.6">
+                        <rect x="455" y="40" width="110" height="12"/><rect x="455" y="65" width="110" height="12"/>
+                        <rect x="455" y="90" width="110" height="12"/><rect x="455" y="115" width="110" height="12"/>
+                    </g>
+
+                    <path d="M 600 290 L 600 130 L 700 70 L 700 290 Z" fill="#b45309"/>
+
+                    <rect x="720" y="70" width="120" height="220" fill="#0369a1"/>
+                    <g fill="#e0f2fe" opacity="0.7">
+                        <rect x="735" y="90" width="25" height="25"/><rect x="780" y="90" width="25" height="25"/>
+                        <rect x="735" y="130" width="25" height="25"/><rect x="780" y="130" width="25" height="25"/>
+                    </g>
+
+                    <!-- Trees Silhouette -->
+                    <path d="M 90 290 Q 80 240 95 230 Q 110 240 100 290 Z" fill="#064e3b"/>
+                    <path d="M 310 290 Q 300 240 315 230 Q 330 240 320 290 Z" fill="#064e3b"/>
+                    <path d="M 590 290 Q 580 240 595 230 Q 610 240 600 290 Z" fill="#064e3b"/>
+                </svg>
+            </div>
+
+            <!-- Duplicate City Segment for Continuous Loop -->
+            <div class="city-segment">
+                <svg width="100%" height="100%" viewBox="0 0 1000 290" preserveAspectRatio="none">
+                    <rect x="20" y="40" width="80" height="250" fill="#1e293b"/>
+                    <g fill="#fef08a" opacity="0.7">
+                        <rect x="35" y="60" width="15" height="15"/><rect x="65" y="60" width="15" height="15"/>
+                        <rect x="35" y="90" width="15" height="15"/><rect x="65" y="90" width="15" height="15"/>
+                    </g>
+                    <polygon points="120,290 120,80 150,30 180,80 180,290" fill="#d97706"/>
+                    <rect x="200" y="100" width="110" height="190" fill="#c2410c"/>
+                    <rect x="330" y="50" width="90" height="240" fill="#0f766e"/>
+                    <rect x="440" y="20" width="140" height="270" fill="#1e3a8a"/>
+                    <path d="M 600 290 L 600 130 L 700 70 L 700 290 Z" fill="#b45309"/>
+                    <rect x="720" y="70" width="120" height="220" fill="#0369a1"/>
+                    <path d="M 90 290 Q 80 240 95 230 Q 110 240 100 290 Z" fill="#064e3b"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 2. Road Layer -->
+        <div class="road" id="road">
+            <div class="sidewalk"></div>
+            <div class="lane-lines"></div>
+        </div>
+
+        <!-- 3. Yellow Car (Background lane) -->
+        <div class="car-box yellow-car">
+            <!-- SVG Yellow Body -->
+            <svg viewBox="0 0 250 90" width="100%">
+                <path d="M 10 65 Q 20 38 50 34 L 85 14 Q 110 8 160 12 L 195 34 Q 235 38 245 60 Q 248 72 235 76 L 10 76 Z" fill="#f59e0b"/>
+                <!-- Windows -->
+                <path d="M 55 36 L 90 18 L 150 16 L 185 36 Z" fill="#1e293b"/>
+                <path d="M 95 20 L 145 18 L 145 34 L 95 34 Z" fill="#94a3b8"/>
+                <path d="M 65 34 L 90 20 L 90 34 Z" fill="#94a3b8"/>
+                <path d="M 150 18 L 180 34 L 150 34 Z" fill="#94a3b8"/>
+                <!-- Headlight & Taillight -->
+                <path d="M 230 48 Q 244 52 240 62 L 225 62 Z" fill="#fffbeb"/>
+                <path d="M 12 48 Q 6 56 12 64 L 20 64 Z" fill="#ef4444"/>
+                <!-- Wheel Arch Cutouts -->
+                <circle cx="53" cy="76" r="23" fill="#334155"/>
+                <circle cx="187" cy="76" r="23" fill="#334155"/>
+            </svg>
+
+            <!-- Wheels -->
+            <svg class="wheel wheel-back" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#18181b" stroke="#3f3f46" stroke-width="5"/>
+                <circle cx="50" cy="50" r="28" fill="#71717a"/>
+                <g stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+                    <line x1="50" y1="50" x2="50" y2="15"/><line x1="50" y1="50" x2="50" y2="85"/>
+                    <line x1="50" y1="50" x2="15" y2="50"/><line x1="50" y1="50" x2="85" y2="50"/>
+                    <line x1="50" y1="50" x2="25" y2="25"/><line x1="50" y1="50" x2="75" y2="75"/>
+                    <line x1="50" y1="50" x2="75" y2="25"/><line x1="50" y1="50" x2="25" y2="75"/>
+                </g>
+                <circle cx="50" cy="50" r="9" fill="#18181b"/>
+            </svg>
+
+            <svg class="wheel wheel-front" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#18181b" stroke="#3f3f46" stroke-width="5"/>
+                <circle cx="50" cy="50" r="28" fill="#71717a"/>
+                <g stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+                    <line x1="50" y1="50" x2="50" y2="15"/><line x1="50" y1="50" x2="50" y2="85"/>
+                    <line x1="50" y1="50" x2="15" y2="50"/><line x1="50" y1="50" x2="85" y2="50"/>
+                    <line x1="50" y1="50" x2="25" y2="25"/><line x1="50" y1="50" x2="75" y2="75"/>
+                    <line x1="50" y1="50" x2="75" y2="25"/><line x1="50" y1="50" x2="25" y2="75"/>
+                </g>
+                <circle cx="50" cy="50" r="9" fill="#18181b"/>
+            </svg>
+        </div>
+
+        <!-- 4. Red Car (Foreground lane) -->
+        <div class="car-box red-car">
+            <!-- SVG Red Body -->
+            <svg viewBox="0 0 280 95" width="100%">
+                <path d="M 12 70 Q 22 40 56 36 L 98 14 Q 126 8 182 12 L 222 36 Q 262 40 272 64 Q 276 76 262 80 L 12 80 Z" fill="#ef4444"/>
+                <!-- Windows -->
+                <path d="M 62 38 L 102 18 L 170 16 L 210 38 Z" fill="#0f172a"/>
+                <path d="M 108 20 L 165 18 L 165 36 L 108 36 Z" fill="#cbd5e1"/>
+                <path d="M 72 36 L 102 20 L 102 36 Z" fill="#cbd5e1"/>
+                <path d="M 170 18 L 202 36 L 170 36 Z" fill="#cbd5e1"/>
+                <!-- Headlight & Taillight -->
+                <path d="M 255 50 Q 272 54 268 66 L 250 66 Z" fill="#ffffff"/>
+                <path d="M 14 50 Q 8 60 14 70 L 24 70 Z" fill="#991b1b"/>
+                <!-- Wheel Arch Cutouts -->
+                <circle cx="60" cy="80" r="26" fill="#334155"/>
+                <circle cx="210" cy="80" r="26" fill="#334155"/>
+            </svg>
+
+            <!-- Wheels -->
+            <svg class="wheel wheel-back" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#18181b" stroke="#3f3f46" stroke-width="5"/>
+                <circle cx="50" cy="50" r="28" fill="#71717a"/>
+                <g stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+                    <line x1="50" y1="50" x2="50" y2="15"/><line x1="50" y1="50" x2="50" y2="85"/>
+                    <line x1="50" y1="50" x2="15" y2="50"/><line x1="50" y1="50" x2="85" y2="50"/>
+                    <line x1="50" y1="50" x2="25" y2="25"/><line x1="50" y1="50" x2="75" y2="75"/>
+                    <line x1="50" y1="50" x2="75" y2="25"/><line x1="50" y1="50" x2="25" y2="75"/>
+                </g>
+                <circle cx="50" cy="50" r="9" fill="#18181b"/>
+            </svg>
+
+            <svg class="wheel wheel-front" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#18181b" stroke="#3f3f46" stroke-width="5"/>
+                <circle cx="50" cy="50" r="28" fill="#71717a"/>
+                <g stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+                    <line x1="50" y1="50" x2="50" y2="15"/><line x1="50" y1="50" x2="50" y2="85"/>
+                    <line x1="50" y1="50" x2="15" y2="50"/><line x1="50" y1="50" x2="85" y2="50"/>
+                    <line x1="50" y1="50" x2="25" y2="25"/><line x1="50" y1="50" x2="75" y2="75"/>
+                    <line x1="50" y1="50" x2="75" y2="25"/><line x1="50" y1="50" x2="25" y2="75"/>
+                </g>
+                <circle cx="50" cy="50" r="9" fill="#18181b"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="controls">
+        <button class="gear-btn" id="gearR">R</button>
+        <button class="gear-btn selected-gear" id="gear1">Gear 1</button>
+        <button class="gear-btn" id="gear2">Gear 2</button>
+        <button class="gear-btn" id="gear3">Gear 3</button>
+        <button class="gear-btn" id="gear4">Gear 4</button>
+
+        <button id="startGear">Start Gear</button>
+        <button id="stop">Stop</button>
+
+        <span class="status-box" id="statusText">Selected: Gear 1 (Stopped)</span>
+    </div>
+
+    <!-- SIMPLE JAVASCRIPT LOGIC -->
+    <script>
+        // Select elements
+        const cityBg = document.querySelector("#cityBg");
+        const road = document.querySelector("#road");
+        const wheels = document.querySelectorAll(".wheel");
+        const gearButtons = document.querySelectorAll(".gear-btn");
+        const statusText = document.querySelector("#statusText");
+
+        // Active state and gear configuration
+        let isRunning = false;
+        let activeGear = {
+            name: "Gear 1",
+            wheelSpeed: "0.8s",
+            roadSpeed: "3s",
+            citySpeed: "18s",
+            isReverse: false
+        };
+
+        // Update CSS animation parameters
+        function updateAnimationSettings() {
+            cityBg.style.animationDuration = activeGear.citySpeed;
+            road.style.animationDuration = activeGear.roadSpeed;
+            wheels.forEach(function(wheel) {
+                wheel.style.animationDuration = activeGear.wheelSpeed;
+            });
+
+            // Handle forward vs reverse direction
+            const animatedElements = [cityBg, road, ...wheels];
+            animatedElements.forEach(function(el) {
+                if (activeGear.isReverse) {
+                    el.classList.add("reverse");
+                } else {
+                    el.classList.remove("reverse");
+                }
+            });
+
+            updateStatusDisplay();
+        }
+
+        // Update screen text readout
+        function updateStatusDisplay() {
+            const stateLabel = isRunning ? "Moving" : "Stopped";
+            statusText.textContent = "Selected: " + activeGear.name + " (" + stateLabel + ")";
+        }
+
+        // Helper to select a gear
+        function selectGear(btnSelector, name, wheelSpeed, roadSpeed, citySpeed, isReverse) {
+            gearButtons.forEach(function(btn) {
+                btn.classList.remove("selected-gear");
+            });
+            document.querySelector(btnSelector).classList.add("selected-gear");
+
+            activeGear = { name, wheelSpeed, roadSpeed, citySpeed, isReverse };
+            updateAnimationSettings();
+        }
+
+        // Gear Button Event Listeners
+        document.querySelector("#gearR").addEventListener("click", function() {
+            selectGear("#gearR", "Reverse", "1.1s", "4.2s", "24s", true);
+        });
+
+        document.querySelector("#gear1").addEventListener("click", function() {
+            selectGear("#gear1", "Gear 1", "0.8s", "3s", "18s", false);
+        });
+
+        document.querySelector("#gear2").addEventListener("click", function() {
+            selectGear("#gear2", "Gear 2", "0.45s", "1.6s", "10s", false);
+        });
+
+        document.querySelector("#gear3").addEventListener("click", function() {
+            selectGear("#gear3", "Gear 3", "0.26s", "0.95s", "6s", false);
+        });
+
+        document.querySelector("#gear4").addEventListener("click", function() {
+            selectGear("#gear4", "Gear 4", "0.14s", "0.5s", "3.2s", false);
+        });
+
+        // Start Gear Button Event Listener
+        document.querySelector("#startGear").addEventListener("click", function() {
+            isRunning = true;
+            updateAnimationSettings();
+
+            cityBg.classList.add("running");
+            road.classList.add("running");
+            wheels.forEach(function(wheel) {
+                wheel.classList.add("running");
+            });
+
+            updateStatusDisplay();
+        });
+
+        // Stop Button Event Listener
+        document.querySelector("#stop").addEventListener("click", function() {
+            isRunning = false;
+
+            cityBg.classList.remove("running");
+            road.classList.remove("running");
+            wheels.forEach(function(wheel) {
+                wheel.classList.remove("running");
+            });
+
+            updateStatusDisplay();
+        });
+    </script>
+</body>
+</html>
